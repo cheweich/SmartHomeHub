@@ -5,17 +5,25 @@ var IRCC_CODE = require("./sony/ircc-code");
 var C = require("./config");
 
 var server = http.createServer(function(request, response) {
-	console.log(new Date() + ": request comming in");
+	console.log(new Date() + ": a " + request.method + " request comming in");
 
-	sonyApi.call(
-		IRCC_CODE.VolumeDown, 
-		function(res, body) {
-			response.end('Status: ' + res.statusCode + ', ' + body);
-		},
-		function(error, res) {
-			response.end('communication error ' + error);
-		}
-	);
+	var successCallback = function(res, body) {
+		response.end('Status: ' + res.statusCode + ', ' + body);
+	};
+	var errorCallback = function(error, res) {
+		response.end('communication error ' + error);
+	};
+
+	if (request.method == 'POST') {
+		request.on('data', function(data) {
+            console.log(new Date() + ": Receive a POST with body: " + data);
+			sonyApi.call(IRCC_CODE[data], successCallback, errorCallback);
+        });
+	}
+	else {
+		sonyApi.call(IRCC_CODE.PowerOn, successCallback, errorCallback);
+	}
+	
 
 });
 
